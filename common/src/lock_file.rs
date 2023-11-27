@@ -12,7 +12,7 @@ pub struct LockFile {
 }
 
 impl LockFile {
-    pub fn new(path: &Path) -> Self {
+    pub fn new(ctx: &Context, path: &Path) -> Self {
         let path = dirs::CACHE.join("lockfiles").join(hash_to_str(&path));
         Self {
             path,

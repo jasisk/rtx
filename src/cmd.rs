@@ -10,7 +10,7 @@ use crate::errors::Error::ScriptFailed;
 use crate::ui::progress_report::ProgressReport;
 use duct::{Expression, IntoExecutablePath};
 
-/// Create a command with any number of of positional arguments, which may be
+/// Create a command with any number of positional arguments, which may be
 /// different types (anything that implements
 /// [`Into<OsString>`](https://doc.rust-lang.org/std/convert/trait.From.html)).
 /// See also the [`cmd`](fn.cmd.html) function, which takes a collection of
@@ -41,7 +41,7 @@ macro_rules! cmd {
     };
 }
 
-/// Create a command with any number of of positional arguments, which may be
+/// Create a command with any number of positional arguments, which may be
 /// different types (anything that implements
 /// [`Into<OsString>`](https://doc.rust-lang.org/std/convert/trait.From.html)).
 /// See also the [`cmd`](fn.cmd.html) function, which takes a collection of
@@ -95,6 +95,18 @@ impl<'a> CmdLineRunner<'a> {
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
 
+        Self {
+            cmd,
+            settings,
+            pr: None,
+            stdin: None,
+        }
+    }
+
+    pub fn new_from_cmd(settings: &'a Settings, mut cmd: Command) -> Self {
+        cmd.stdin(Stdio::null());
+        cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::piped());
         Self {
             cmd,
             settings,

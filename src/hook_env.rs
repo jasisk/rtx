@@ -13,9 +13,9 @@ use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::env_diff::{EnvDiffOperation, EnvDiffPatches};
-use crate::hash::hash_to_str;
 use crate::shell::Shell;
 use crate::{dirs, env};
+use rtx_common::hash::hash_to_str;
 
 /// this function will early-exit the application if hook-env is being
 /// called and it does not need to be

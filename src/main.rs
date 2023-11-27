@@ -1,6 +1,8 @@
 extern crate core;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate rtx_common;
 
 use std::process::exit;
 
@@ -16,14 +18,12 @@ use crate::output::Output;
 #[macro_use]
 mod output;
 
-#[macro_use]
-mod regex;
-
 pub mod build_time;
 mod cache;
 mod cli;
 mod cmd;
 mod config;
+mod context;
 mod default_shorthands;
 mod direnv;
 mod dirs;
@@ -35,7 +35,6 @@ mod fake_asdf;
 mod file;
 mod git;
 pub mod github;
-mod hash;
 mod hook_env;
 mod http;
 mod lock_file;

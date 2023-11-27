@@ -1,11 +1,10 @@
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate rtx_common;
 
 #[macro_use]
 mod output;
-
-#[macro_use]
-mod regex;
 
 #[macro_use]
 pub mod cli;
@@ -14,6 +13,7 @@ mod build_time;
 mod cache;
 pub mod cmd;
 mod config;
+mod context;
 mod default_shorthands;
 mod direnv;
 mod dirs;
@@ -26,7 +26,6 @@ mod fake_asdf;
 mod file;
 mod git;
 pub mod github;
-mod hash;
 mod hook_env;
 mod http;
 mod lock_file;

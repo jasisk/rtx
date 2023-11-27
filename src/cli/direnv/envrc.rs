@@ -3,11 +3,11 @@ use std::io::Write;
 use std::ops::Deref;
 
 use color_eyre::eyre::Result;
+use rtx_common::hash::hash_to_str;
 
 use crate::cli::command::Command;
 use crate::config::Config;
 use crate::config::MissingRuntimeBehavior::{Prompt, Warn};
-use crate::hash::hash_to_str;
 use crate::output::Output;
 use crate::toolset::ToolsetBuilder;
 use crate::{dirs, env};

@@ -4,6 +4,7 @@ use std::fmt::{Debug, Display};
 use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::{eyre, Result};
+use rtx_common::hash::hash_to_str;
 
 use tool_versions::ToolVersions;
 
@@ -12,7 +13,6 @@ use crate::config::config_file::rtx_toml::RtxToml;
 use crate::config::settings::SettingsBuilder;
 use crate::config::{AliasMap, Config, Settings};
 use crate::file::{display_path, replace_path};
-use crate::hash::hash_to_str;
 use crate::output::Output;
 use crate::plugins::PluginName;
 use crate::toolset::{ToolVersion, ToolVersionList, Toolset};

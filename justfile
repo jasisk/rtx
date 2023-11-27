@@ -80,7 +80,7 @@ clean:
 
 # clippy, cargo fmt --check, and just --fmt
 lint:
-    cargo clippy -- -Dwarnings
+    cargo clippy --all -- -Dwarnings
     cargo fmt --all -- --check
     shellcheck scripts/*.sh
     shfmt -d scripts/*.sh
@@ -88,7 +88,7 @@ lint:
 
 # runs linters but makes fixes when possible
 lint-fix:
-    cargo clippy --fix --allow-staged --allow-dirty -- -Dwarnings
+    cargo clippy --all --fix --allow-staged --allow-dirty -- -Dwarnings
     cargo fmt --all
     shellcheck scripts/*.sh
     shfmt -w scripts/*.sh
@@ -118,4 +118,4 @@ pre-commit: render-help render-completions render-mangen
 
 # create/publish a new version of rtx
 release *args:
-    cargo release {{ args }}
+    cargo release --workspace {{ args }}

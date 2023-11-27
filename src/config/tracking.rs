@@ -7,7 +7,7 @@ use color_eyre::eyre::Result;
 
 use crate::dirs;
 use crate::file::{create_dir_all, make_symlink};
-use crate::hash::hash_to_str;
+use rtx_common::hash::hash_to_str;
 
 #[derive(Debug, Default)]
 pub struct Tracker {

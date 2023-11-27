@@ -18,7 +18,6 @@ use crate::env_diff::{EnvDiff, EnvDiffOperation};
 use crate::errors::Error::PluginNotInstalled;
 use crate::file::remove_all;
 use crate::git::Git;
-use crate::hash::hash_to_str;
 use crate::plugins::external_plugin_cache::ExternalPluginCache;
 use crate::plugins::rtx_plugin_toml::RtxPluginToml;
 use crate::plugins::Script::{Download, ExecEnv, Install, ParseLegacyFile};
@@ -29,6 +28,7 @@ use crate::ui::multi_progress_report::MultiProgressReport;
 use crate::ui::progress_report::ProgressReport;
 use crate::ui::prompt;
 use crate::{dirs, env, file};
+use rtx_common::hash::hash_to_str;
 
 /// This represents a plugin installed to ~/.local/share/rtx/plugins
 pub struct ExternalPlugin {

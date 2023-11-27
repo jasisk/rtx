@@ -1,23 +1,19 @@
 use std::collections::BTreeMap;
-
 use std::path::{Path, PathBuf};
-use std::process::exit;
 
-use clap::Command;
 use color_eyre::eyre::Result;
+
+use rtx::{Node as NodeProduct, Product};
 
 use crate::cmd::CmdLineRunner;
 use crate::config::{Config, Settings};
-use crate::duration::DAILY;
+use crate::context::gen_context;
 use crate::env::{RTX_NODE_CONCURRENCY, RTX_NODE_FORCE_COMPILE};
-use crate::file::create_dir_all;
-use crate::git::Git;
-use crate::lock_file::LockFile;
 use crate::plugins::core::CorePlugin;
 use crate::plugins::{Plugin, PluginName};
 use crate::toolset::{ToolVersion, ToolVersionRequest};
 use crate::ui::progress_report::ProgressReport;
-use crate::{cmd, env, file};
+use crate::{env, file};
 
 #[derive(Debug)]
 pub struct NodePlugin {
@@ -31,69 +27,11 @@ impl NodePlugin {
         }
     }
 
-    fn node_build_path(&self) -> PathBuf {
-        self.core.cache_path.join("node-build")
-    }
-    fn node_build_bin(&self) -> PathBuf {
-        self.node_build_path().join("bin/node-build")
-    }
-    fn install_or_update_node_build(&self) -> Result<()> {
-        let _lock = self.lock_node_build();
-        if self.node_build_path().exists() {
-            self.update_node_build()
-        } else {
-            self.install_node_build()
-        }
-    }
-
-    fn lock_node_build(&self) -> Result<fslock::LockFile> {
-        LockFile::new(&self.node_build_path())
-            .with_callback(|l| {
-                trace!("install_or_update_node_build {}", l.display());
-            })
-            .lock()
-    }
-    fn install_node_build(&self) -> Result<()> {
-        if self.node_build_path().exists() {
-            return Ok(());
-        }
-        debug!(
-            "Installing node-build to {}",
-            self.node_build_path().display()
-        );
-        create_dir_all(self.node_build_path().parent().unwrap())?;
-        let git = Git::new(self.node_build_path());
-        git.clone(&env::RTX_NODE_BUILD_REPO)?;
-        Ok(())
-    }
-    fn update_node_build(&self) -> Result<()> {
-        if self.node_build_recently_updated()? {
-            return Ok(());
-        }
-        debug!(
-            "Updating node-build in {}",
-            self.node_build_path().display()
-        );
-        let git = Git::new(self.node_build_path());
-        let node_build_path = self.node_build_path();
-        CorePlugin::run_fetch_task_with_timeout(move || {
-            git.update(None)?;
-            file::touch_dir(&node_build_path)?;
-            Ok(())
-        })
-    }
-
     fn fetch_remote_versions(&self) -> Result<Vec<String>> {
-        self.install_or_update_node_build()?;
-        let node_build_bin = self.node_build_bin();
-        CorePlugin::run_fetch_task_with_timeout(move || {
-            let output = cmd!(node_build_bin, "--definitions").read()?;
-            let versions = output
-                .split('\n')
-                .filter(|s| regex!(r"^[0-9].+$").is_match(s))
-                .map(|s| s.to_string())
-                .collect();
-            Ok(versions)
+        CorePlugin::run_fetch_task_with_timeout(|| {
+            let ctx = gen_context();
+            let node = NodeProduct::new(&ctx)?;
+            node.list_versions(&ctx)
         })
     }
 
@@ -153,16 +91,6 @@ impl NodePlugin {
             .arg("-v")
             .execute()
     }
-
-    fn node_build_recently_updated(&self) -> Result<bool> {
-        let updated_at = file::modified_duration(&self.node_build_path())?;
-        Ok(updated_at < DAILY)
-    }
-
-    fn verbose_install(&self, settings: &Settings) -> bool {
-        let verbose_env = *env::RTX_NODE_VERBOSE_INSTALL;
-        verbose_env == Some(true) || (settings.verbose && verbose_env != Some(false))
-    }
 }
 
 impl Plugin for NodePlugin {
@@ -218,65 +146,31 @@ impl Plugin for NodePlugin {
         Ok(body.to_string())
     }
 
-    fn external_commands(&self) -> Result<Vec<Command>> {
-        // sort of a hack to get this not to display for nodejs
-        let topic = Command::new("node")
-            .about("Commands for the node plugin")
-            .subcommands(vec![Command::new("node-build")
-                .about("Use/manage rtx's internal node-build")
-                .arg(
-                    clap::Arg::new("args")
-                        .num_args(1..)
-                        .allow_hyphen_values(true)
-                        .trailing_var_arg(true),
-                )]);
-        Ok(vec![topic])
-    }
-
-    fn execute_external_command(
-        &self,
-        _config: &Config,
-        command: &str,
-        args: Vec<String>,
-    ) -> Result<()> {
-        match command {
-            "node-build" => {
-                self.install_or_update_node_build()?;
-                cmd::cmd(self.node_build_bin(), args).run()?;
-            }
-            _ => unreachable!(),
-        }
-        exit(0);
-    }
-
     fn install_version(
         &self,
         config: &Config,
         tv: &ToolVersion,
         pr: &ProgressReport,
     ) -> Result<()> {
-        self.install_node_build()?;
-        pr.set_message("running node-build");
-        let mut cmd = CmdLineRunner::new(&config.settings, self.node_build_bin())
-            .with_pr(pr)
-            .arg(tv.version.as_str());
+        let mut ctx = gen_context();
+        ctx.on_stderr = Box::new(|line| pr.println(line));
+        ctx.on_stdout = Box::new(|line| pr.set_message(line));
+        ctx.on_exec = Box::new(|cmd| {
+            CmdLineRunner::new_from_cmd(&config.settings, cmd)
+                .with_pr(pr)
+                .execute()
+        });
+        let mut node = NodeProduct::new(&ctx)?;
         if matches!(&tv.request, ToolVersionRequest::Ref { .. }) || *RTX_NODE_FORCE_COMPILE {
-            let make_opts = String::from(" -j") + &RTX_NODE_CONCURRENCY.to_string();
-            cmd = cmd
-                .env(
-                    "MAKE_OPTS",
-                    env::var("MAKE_OPTS").unwrap_or_default() + &make_opts,
-                )
-                .env(
-                    "NODE_MAKE_OPTS",
-                    env::var("NODE_MAKE_OPTS").unwrap_or_default() + &make_opts,
-                )
-                .arg("--compile");
+            if let Some(concurrency) = *RTX_NODE_CONCURRENCY {
+                node.concurrency(concurrency);
+            }
+            node.configure_opts(env::var("CONFIGURE_OPTS").unwrap_or_default());
+            node.make_opts(env::var("MAKE_OPTS").unwrap_or_default());
+            node.make_install_opts(env::var("MAKE_INSTALL_OPTS").unwrap_or_default());
+            node.compile(true);
         }
-        if self.verbose_install(&config.settings) {
-            cmd = cmd.arg("--verbose");
-        }
-        cmd.arg(tv.install_path()).execute()?;
+        node.install(&ctx, &tv.version, &tv.install_path())?;
         self.test_node(config, tv, pr)?;
         self.install_npm_shim(tv)?;
         self.test_npm(config, tv, pr)?;

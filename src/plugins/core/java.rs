@@ -7,6 +7,7 @@ use color_eyre::eyre::{eyre, Result};
 use indoc::formatdoc;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
+use rtx_common::hash;
 use serde_derive::{Deserialize, Serialize};
 use versions::Versioning;
 
@@ -18,7 +19,7 @@ use crate::plugins::core::CorePlugin;
 use crate::plugins::{Plugin, PluginName};
 use crate::toolset::{ToolVersion, ToolVersionRequest};
 use crate::ui::progress_report::ProgressReport;
-use crate::{env, file, hash, http};
+use crate::{env, file, http};
 
 #[derive(Debug)]
 pub struct JavaPlugin {

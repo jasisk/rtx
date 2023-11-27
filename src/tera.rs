@@ -6,7 +6,7 @@ use tera::{Context, Tera, Value};
 
 use crate::cmd::cmd;
 use crate::env;
-use crate::hash::hash_to_str;
+use rtx_common::hash::hash_to_str;
 
 pub static BASE_CONTEXT: Lazy<Context> = Lazy::new(|| {
     let mut context = Context::new();

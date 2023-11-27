@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::Result;
 use itertools::Itertools;
+use rtx_common::hash;
 use versions::Versioning;
 
 use crate::cli::version::{ARCH, OS};
@@ -13,7 +14,7 @@ use crate::plugins::core::CorePlugin;
 use crate::plugins::{Plugin, PluginName};
 use crate::toolset::ToolVersion;
 use crate::ui::progress_report::ProgressReport;
-use crate::{cmd, env, file, hash, http};
+use crate::{cmd, env, file, http};
 
 #[derive(Debug)]
 pub struct GoPlugin {

@@ -5,7 +5,7 @@ use std::process::exit;
 
 use color_eyre::eyre::Result;
 
-use rtx::cli::{version, Cli};
+use rtx_cli::cli::{version, Cli};
 
 fn main() {
     if let Err(e) = try_main() {

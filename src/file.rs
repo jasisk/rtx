@@ -13,31 +13,15 @@ use tar::Archive;
 use crate::{cmd, dirs, env};
 
 pub fn remove_all<P: AsRef<Path>>(path: P) -> Result<()> {
-    let path = path.as_ref();
-    match path.metadata().map(|m| m.file_type()) {
-        Ok(x) if x.is_symlink() || x.is_file() => {
-            remove_file(path)?;
-        }
-        Ok(x) if x.is_dir() => {
-            trace!("rm -rf {}", path.display());
-            fs::remove_dir_all(path)
-                .with_context(|| format!("failed rm -rf: {}", path.display()))?;
-        }
-        _ => {}
-    };
-    Ok(())
+    rtx_common::file::remove_all(path)
 }
 
 pub fn remove_file<P: AsRef<Path>>(path: P) -> Result<()> {
-    let path = path.as_ref();
-    trace!("rm {}", path.display());
-    fs::remove_file(path).with_context(|| format!("failed rm: {}", path.display()))
+    rtx_common::file::remove_file(path)
 }
 
 pub fn remove_dir<P: AsRef<Path>>(path: P) -> Result<()> {
-    let path = path.as_ref();
-    trace!("rmdir {}", path.display());
-    fs::remove_dir(path).with_context(|| format!("failed rmdir: {}", path.display()))
+    rtx_common::file::remove_dir(path)
 }
 
 pub fn remove_all_with_warning<P: AsRef<Path>>(path: P) -> Result<()> {
@@ -48,11 +32,7 @@ pub fn remove_all_with_warning<P: AsRef<Path>>(path: P) -> Result<()> {
 }
 
 pub fn rename<P: AsRef<Path>, Q: AsRef<Path>>(from: P, to: Q) -> Result<()> {
-    let from = from.as_ref();
-    let to = to.as_ref();
-    trace!("mv {} {}", from.display(), to.display());
-    fs::rename(from, to)
-        .with_context(|| format!("failed rename: {} -> {}", from.display(), to.display()))
+    rtx_common::file::rename(from, to)
 }
 
 pub fn write<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> Result<()> {
@@ -68,9 +48,7 @@ pub fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
 }
 
 pub fn create_dir_all<P: AsRef<Path>>(path: P) -> Result<()> {
-    let path = path.as_ref();
-    trace!("mkdir -p {}", path.display());
-    fs::create_dir_all(path).with_context(|| format!("failed create_dir_all: {}", path.display()))
+    rtx_common::file::create_dir_all(path)
 }
 
 pub fn basename(path: &Path) -> Option<String> {

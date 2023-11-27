@@ -7,10 +7,10 @@ use versions::{Chunk, Version};
 
 use crate::config::Config;
 use crate::dirs;
-use crate::hash::hash_to_str;
 use crate::plugins::PluginName;
 use crate::tool::Tool;
 use crate::toolset::{ToolVersionOptions, ToolVersionRequest};
+use rtx_common::hash::hash_to_str;
 
 /// represents a single version of a tool for a particular plugin
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
